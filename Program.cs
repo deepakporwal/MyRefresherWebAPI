@@ -19,8 +19,8 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services
-    .AddOptions<DevelopmentCredentialsOptions>()
-    .BindConfiguration(DevelopmentCredentialsOptions.SectionName)
+    .AddOptions<DevelopmentUsersOptions>()
+    .BindConfiguration(DevelopmentUsersOptions.SectionName)
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services.AddSingleton<JwtTokenService>();
@@ -63,7 +63,13 @@ builder.Services
             ClockSkew = TimeSpan.FromSeconds(30)
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Regions.Read", policy =>
+        policy.RequireRole("Admin", "Reader", "Editor"));
+    options.AddPolicy("Regions.Write", policy =>
+        policy.RequireRole("Admin", "Editor"));
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

@@ -20,6 +20,7 @@ namespace MyRefresherWebAPI.Controllers
         }
 
         [HttpGet("regions")]
+        [Authorize(Policy = "Regions.Read")]
         [ProducesResponseType(typeof(IEnumerable<RegionDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -41,9 +42,11 @@ namespace MyRefresherWebAPI.Controllers
         }
 
         [HttpPost("regions")]
+        [Authorize(Policy = "Regions.Write")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult AddRegion([FromBody] RegionDTO regionDTO)
         {
             return Ok(new { message = "Region added successfully." });

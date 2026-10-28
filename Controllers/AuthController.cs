@@ -12,7 +12,7 @@ namespace MyRefresherWebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public sealed class AuthController(
-    IOptions<DevelopmentCredentialsOptions> credentialsOptions,
+    IOptions<DevelopmentUsersOptions> usersOptions,
     JwtTokenService tokenService) : ControllerBase
 {
     [AllowAnonymous]
@@ -21,16 +21,17 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<TokenResponse> CreateToken(LoginRequest request)
     {
-        var configuredCredentials = credentialsOptions.Value;
-        var usernameMatches = FixedTimeEquals(request.Username, configuredCredentials.Username);
-        var passwordMatches = FixedTimeEquals(request.Password, configuredCredentials.Password);
+        var configuredUser = usersOptions.Value.Users.FirstOrDefault(user =>
+            string.Equals(user.Username, request.Username, StringComparison.Ordinal));
+        var passwordMatches = configuredUser is not null &&
+            FixedTimeEquals(request.Password, configuredUser.Password);
 
-        if (!usernameMatches || !passwordMatches)
+        if (configuredUser is null || !passwordMatches)
         {
             return Unauthorized();
         }
 
-        return Ok(tokenService.CreateToken(configuredCredentials.Username));
+        return Ok(tokenService.CreateToken(configuredUser));
     }
 
     private static bool FixedTimeEquals(string left, string right)

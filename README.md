@@ -27,10 +27,13 @@ When running in the Development environment, Swagger UI is available at:
 
 ## Authentication
 
-The API uses Microsoft JWT Bearer authentication. In the Development environment, the token endpoint accepts the credentials configured in `appsettings.Development.json`:
+The API uses Microsoft JWT Bearer authentication. In the Development environment, the token endpoint accepts the users configured in `appsettings.Development.json`:
 
-- Username: `admin`
-- Password: `password`
+| Username | Password | Roles |
+| --- | --- | --- |
+| `admin` | `password` | `Admin`, `Reader`, `Editor` |
+| `reader` | `reader-password` | `Reader` |
+| `editor` | `editor-password` | `Reader`, `Editor` |
 
 The development signing key is also intentionally scoped to the local Development configuration. Before deploying, provide a unique signing key and credential values through an external configuration provider or environment variables. Do not commit production secrets.
 
@@ -40,7 +43,7 @@ The JWT settings are:
 - `Jwt__Issuer` - the expected token issuer.
 - `Jwt__Audience` - the expected token audience.
 - `Jwt__ExpirationMinutes` - token lifetime from 1 through 1440 minutes.
-- `DevelopmentCredentials__Username` and `DevelopmentCredentials__Password` - the configured login values for this sample API.
+- `DevelopmentUsers__Users` - the configured development users, passwords, and roles for this sample API.
 
 For example, set production values in PowerShell before starting the API:
 
@@ -48,8 +51,9 @@ For example, set production values in PowerShell before starting the API:
 $env:Jwt__SigningKey = 'replace-with-a-random-production-key'
 $env:Jwt__Issuer = 'https://api.example.com'
 $env:Jwt__Audience = 'myrefresherwebapi-clients'
-$env:DevelopmentCredentials__Username = 'replace-with-a-managed-username'
-$env:DevelopmentCredentials__Password = 'replace-with-a-managed-password'
+$env:DevelopmentUsers__Users__0__Username = 'replace-with-a-managed-username'
+$env:DevelopmentUsers__Users__0__Password = 'replace-with-a-managed-password'
+$env:DevelopmentUsers__Users__0__Roles__0 = 'Admin'
 ```
 
 Use a secret manager such as Azure Key Vault in a real deployment rather than placing secrets in shell history or committed configuration.
@@ -100,7 +104,12 @@ The endpoint returns the sample regions as JSON:
 ]
 ```
 
-Requests without valid credentials receive `401 Unauthorized`.
+The token contains one `role` claim for each assigned role. The region policies are:
+
+- `Regions.Read`: `Admin`, `Reader`, or `Editor`; used by `GET /api/Region/regions`.
+- `Regions.Write`: `Admin` or `Editor`; used by `POST /api/Region/regions`.
+
+Requests without a valid token receive `401 Unauthorized`. A valid token with insufficient roles receives `403 Forbidden`. For example, `reader` can get regions but receives `403 Forbidden` when adding one, while `editor` can do both.
 
 ### Add a region
 

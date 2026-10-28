@@ -10,10 +10,39 @@ Content-Type: application/json
   "password": "password"
 }
 
+### Reader token (can read regions, cannot add regions)
+POST {{MyRefresherWebAPI_HostAddress}}/api/Auth/token
+Content-Type: application/json
+
+{
+  "username": "reader",
+  "password": "reader-password"
+}
+
+### Editor token (can read and add regions)
+POST {{MyRefresherWebAPI_HostAddress}}/api/Auth/token
+Content-Type: application/json
+
+{
+  "username": "editor",
+  "password": "editor-password"
+}
+
 ### Get regions with the JWT access token
 GET {{MyRefresherWebAPI_HostAddress}}/api/Region/regions
 Accept: application/json
 Authorization: Bearer {{accessToken}}
+
+### Add a region (requires Editor or Admin role)
+POST {{MyRefresherWebAPI_HostAddress}}/api/Region/regions
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "id": 4,
+  "name": "Region 4",
+  "code": "R4"
+}
 
 ### Get weather with the JWT access token
 GET {{MyRefresherWebAPI_HostAddress}}/weatherforecast/

@@ -12,16 +12,20 @@ public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptions)
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-    public TokenResponse CreateToken(string username)
+    public TokenResponse CreateToken(DevelopmentUserOptions user)
     {
         var issuedAtUtc = DateTime.UtcNow;
         var expiresAtUtc = issuedAtUtc.AddMinutes(_jwtOptions.ExpirationMinutes);
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(ClaimTypes.Name, username),
+            new(JwtRegisteredClaimNames.Sub, user.Username),
+            new(ClaimTypes.Name, user.Username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+        claims.AddRange(user.Roles
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(role => new Claim(ClaimTypes.Role, role)));
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
