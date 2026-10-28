@@ -1,6 +1,6 @@
 # MyRefresherWebAPI
 
-A small ASP.NET Core Web API targeting .NET 10. The project demonstrates protected region endpoints, HTTP Basic Authentication, AutoMapper, custom model validation, and OpenAPI/Swagger documentation.
+A small ASP.NET Core Web API targeting .NET 10. The project demonstrates protected region endpoints, JWT Bearer authentication, AutoMapper, custom model validation, and OpenAPI/Swagger documentation.
 
 ## Requirements
 
@@ -27,29 +27,67 @@ When running in the Development environment, Swagger UI is available at:
 
 ## Authentication
 
-The API uses HTTP Basic Authentication. The current development credentials are:
+The API uses Microsoft JWT Bearer authentication. In the Development environment, the token endpoint accepts the credentials configured in `appsettings.Development.json`:
 
 - Username: `admin`
 - Password: `password`
 
-> These credentials are hard-coded for demonstration purposes only. Replace the authentication implementation with a secure, configurable identity solution before deploying to a real environment.
+The development signing key is also intentionally scoped to the local Development configuration. Before deploying, provide a unique signing key and credential values through an external configuration provider or environment variables. Do not commit production secrets.
+
+The JWT settings are:
+
+- `Jwt__SigningKey` - a private signing key of at least 32 characters.
+- `Jwt__Issuer` - the expected token issuer.
+- `Jwt__Audience` - the expected token audience.
+- `Jwt__ExpirationMinutes` - token lifetime from 1 through 1440 minutes.
+- `DevelopmentCredentials__Username` and `DevelopmentCredentials__Password` - the configured login values for this sample API.
+
+For example, set production values in PowerShell before starting the API:
+
+```powershell
+$env:Jwt__SigningKey = 'replace-with-a-random-production-key'
+$env:Jwt__Issuer = 'https://api.example.com'
+$env:Jwt__Audience = 'myrefresherwebapi-clients'
+$env:DevelopmentCredentials__Username = 'replace-with-a-managed-username'
+$env:DevelopmentCredentials__Password = 'replace-with-a-managed-password'
+```
+
+Use a secret manager such as Azure Key Vault in a real deployment rather than placing secrets in shell history or committed configuration.
 
 ## API endpoint
 
 ### Get regions
 
+First request a token:
+
+```http
+POST /api/Auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+```
+
+Then send the returned `accessToken` as a Bearer token:
+
 ```http
 GET /api/Region/regions
-Authorization: Basic <base64(username:password)>
+Authorization: Bearer <accessToken>
 ```
 
 Example using PowerShell:
 
 ```powershell
-$credentials = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('admin:password'))
+$tokenResponse = Invoke-RestMethod `
+  -Uri 'https://localhost:7156/api/Auth/token' `
+  -Method Post `
+  -ContentType 'application/json' `
+  -Body (@{ username = 'admin'; password = 'password' } | ConvertTo-Json)
 Invoke-RestMethod `
   -Uri 'https://localhost:7156/api/Region/regions' `
-  -Headers @{ Authorization = "Basic $credentials" }
+	-Headers @{ Authorization = "Bearer $($tokenResponse.accessToken)" }
 ```
 
 The endpoint returns the sample regions as JSON:
@@ -68,7 +106,7 @@ Requests without valid credentials receive `401 Unauthorized`.
 
 ```http
 POST /api/Region/regions
-Authorization: Basic <base64(username:password)>
+Authorization: Bearer <accessToken>
 Content-Type: application/json
 
 {
@@ -100,12 +138,14 @@ Because `RegionController` uses `[ApiController]`, ASP.NET Core automatically ch
 
 ### Authentication and authorization
 
-`BasicAuthenticationHandler` validates the HTTP Basic Authentication header, and `[Authorize]` protects the region controller. Authentication must run successfully before either region endpoint can be called.
+`AuthController` issues short-lived JWT access tokens from the configured sample credentials. JWT Bearer validation protects the region and weather controllers through `[Authorize]`; tokens must have the configured issuer, audience, signature, and valid lifetime.
 
 ## Project structure
 
 - `Program.cs` - Application configuration and middleware pipeline
-- `BasicAuthenticationHandler.cs` - Development HTTP Basic Authentication handler
+- `Controllers/AuthController.cs` - Development token endpoint
+- `Configuration/` - JWT and credential configuration options
+- `Services/JwtTokenService.cs` - JWT creation service
 - `Controllers/RegionController.cs` - Protected regions endpoint
 - `Models/` - Domain and DTO models
 - `Profiles/RegionProfile.cs` - AutoMapper configuration

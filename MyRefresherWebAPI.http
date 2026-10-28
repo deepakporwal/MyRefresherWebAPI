@@ -1,6 +1,21 @@
 @MyRefresherWebAPI_HostAddress = http://localhost:5012
+@accessToken = paste-token-from-login-response-here
 
+### Get a development access token
+POST {{MyRefresherWebAPI_HostAddress}}/api/Auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+### Get regions with the JWT access token
+GET {{MyRefresherWebAPI_HostAddress}}/api/Region/regions
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+### Get weather with the JWT access token
 GET {{MyRefresherWebAPI_HostAddress}}/weatherforecast/
 Accept: application/json
-
-###
+Authorization: Bearer {{accessToken}}
