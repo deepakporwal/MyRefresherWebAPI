@@ -18,7 +18,7 @@ config:
         - name: url
           value: https://localhost:7156
         - name: access_token
-          value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbiIsImp0aSI6ImJmZTBjZTFkLThhNTAtNGRkMi1iNDFjLTM4ZWM0YTRkNjExOCIsIm5iZiI6MTc5MzE4NjU5MiwiZXhwIjoxNzkzMTkwMTkyLCJpc3MiOiJNeVJlZnJlc2hlcldlYkFQSSIsImF1ZCI6Ik15UmVmcmVzaGVyV2ViQVBJLkNsaWVudHMifQ.GV0RG2xJREoh5sdMrWQgJ_1o1I6CSmxP1nmxQ-wCeGc
+          value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlZGl0b3IiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiZWRpdG9yIiwianRpIjoiZTRiMjE2YWUtNDdmZS00OTM3LWEyMGItZDA4YjBmY2E3MmQ2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjpbIlJlYWRlciIsIkVkaXRvciJdLCJuYmYiOjE3OTMxOTI5MDQsImV4cCI6MTc5MzE5NjUwNCwiaXNzIjoiTXlSZWZyZXNoZXJXZWJBUEkiLCJhdWQiOiJNeVJlZnJlc2hlcldlYkFQSS5DbGllbnRzIn0.ZyrGA9yV0g22ZaTvRGuYdeRqWzdWR_7zx5nVia3qYzU
 items:
   - info:
       name: Get Regions
@@ -26,11 +26,10 @@ items:
       seq: 2
     http:
       method: GET
-      url: '{{url}}/api/region/regions'
+      url: '{{url}}/api/v1/region/regions'
       auth:
-        type: basic
-        username: admin
-        password: password
+        type: bearer
+        token: '{{access_token}}'
     settings:
       encodeUrl: true
       timeout: 0
@@ -60,7 +59,7 @@ items:
       seq: 3
     http:
       method: POST
-      url: '{{url}}/api/region/regions'
+      url: '{{url}}/api/v1/region/regions'
       body:
         type: json
         data: |-
@@ -113,11 +112,81 @@ items:
       followRedirects: true
       maxRedirects: 5
       forwardAuthorizationHeader: false
+  - info:
+      name: Auth Token - Reader Role
+      type: http
+      seq: 5
+    http:
+      method: POST
+      url: '{{url}}/api/Auth/token'
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "username": "reader",
+            "password": "reader-password"
+          }
+      auth: inherit
+    runtime:
+      scripts:
+        - type: after-response
+          code: |-
+            const body = res.getBody();
+
+            console.log("Response body:", body);
+
+            bru.setEnvVar("access_token", body.accessToken);
+
+            console.log("Token saved:", bru.getEnvVar("access_token"));
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+  - info:
+      name: Auth Token - Editor
+      type: http
+      seq: 6
+    http:
+      method: POST
+      url: '{{url}}/api/v1/Auth/token'
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "username": "editor",
+            "password": "editor-password"
+          }
+      auth: inherit
+    runtime:
+      scripts:
+        - type: after-response
+          code: |-
+            const body = res.getBody();
+
+            console.log("Response body:", body);
+
+            bru.setEnvVar("access_token", body.accessToken);
+
+            console.log("Token saved:", bru.getEnvVar("access_token"));
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
 bundled: true
 extensions:
   bruno:
     ignore:
       - node_modules
       - .git
-    exportedAt: '2026-10-28T11:23:46.927Z'
+    exportedAt: '2026-10-28T13:08:56.624Z'
     exportedUsing: Bruno

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -10,7 +11,8 @@ using MyRefresherWebAPI.Services;
 namespace MyRefresherWebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/[controller]")]
 public sealed class AuthController(
     IOptions<DevelopmentUsersOptions> usersOptions,
     JwtTokenService tokenService,

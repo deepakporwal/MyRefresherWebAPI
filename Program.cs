@@ -1,5 +1,6 @@
 using System.Text;
 using AutoMapper;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -60,6 +61,18 @@ builder.Services
             return new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
         };
     });
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = false;
+        options.ReportApiVersions = true;
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
 builder.Services.AddAutoMapper(_ => { }, typeof(RegionProfile));
 builder.Services
     .AddOptions<JwtOptions>()
@@ -74,23 +87,8 @@ builder.Services
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new() { Title = "MyRefresherWebAPI API", Version = "v1" });
-    options.AddSecurityDefinition("bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.ParameterLocation.Header,
-        Description = "Enter a JWT access token."
-    });
-    options.AddSecurityRequirement(document => new()
-    {
-        [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("bearer", document)] = []
-    });
-});
+builder.Services.AddTransient<ConfigureSwaggerOptions>();
+builder.Services.AddSwaggerGen();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -170,7 +168,15 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        foreach (var description in app.DescribeApiVersions())
+        {
+            options.SwaggerEndpoint(
+                $"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseHttpsRedirection();

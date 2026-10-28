@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 
 namespace MyRefresherWebAPI.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("[controller]")]
+    [ApiVersion(1.0)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
     {
         private static readonly string[] Summaries =

@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using MyRefresherWebAPI.Models.Domain;
 using MyRefresherWebAPI.Services;
 
 namespace MyRefresherWebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
 public sealed class EmployeeController(
     IEmployeeService employeeService,

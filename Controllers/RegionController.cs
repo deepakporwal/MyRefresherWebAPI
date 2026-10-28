@@ -1,4 +1,5 @@
 using AutoMapper;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,8 @@ using MyRefresherWebAPI.Models.DTO;
 
 namespace MyRefresherWebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion(1.0)]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize]
     public class RegionController : ControllerBase
