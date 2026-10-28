@@ -1,11 +1,11 @@
 using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MyRefresherWebAPI.Configuration;
 using MyRefresherWebAPI;
+using MyRefresherWebAPI.Middleware;
 using MyRefresherWebAPI.Profiles;
 using MyRefresherWebAPI.Services;
 using Serilog;
@@ -72,6 +72,7 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -153,31 +154,7 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async context =>
-{
-    var exceptionFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-    logger.LogError(
-        exceptionFeature?.Error,
-        "Unhandled exception while processing request. Method {Method} Path {Path} TraceId {TraceId}",
-        context.Request.Method,
-        context.Request.Path,
-        context.TraceIdentifier);
-
-    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    context.Response.ContentType = "application/problem+json";
-
-    var problemDetails = new ProblemDetails
-    {
-        Status = StatusCodes.Status500InternalServerError,
-        Title = "An unexpected error occurred.",
-        Instance = context.Request.Path
-    };
-    problemDetails.Extensions["traceId"] = context.TraceIdentifier;
-
-    await context.Response.WriteAsJsonAsync(problemDetails);
-}));
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate =
