@@ -1,0 +1,123 @@
+opencollection: 1.0.0
+info:
+  name: POC Demo
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ''
+      port: ''
+      auth:
+        username: ''
+        password: ''
+      bypassProxy: ''
+  environments:
+    - name: local
+      variables:
+        - name: url
+          value: https://localhost:7156
+        - name: access_token
+          value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbiIsImp0aSI6ImJmZTBjZTFkLThhNTAtNGRkMi1iNDFjLTM4ZWM0YTRkNjExOCIsIm5iZiI6MTc5MzE4NjU5MiwiZXhwIjoxNzkzMTkwMTkyLCJpc3MiOiJNeVJlZnJlc2hlcldlYkFQSSIsImF1ZCI6Ik15UmVmcmVzaGVyV2ViQVBJLkNsaWVudHMifQ.GV0RG2xJREoh5sdMrWQgJ_1o1I6CSmxP1nmxQ-wCeGc
+items:
+  - info:
+      name: Get Regions
+      type: http
+      seq: 2
+    http:
+      method: GET
+      url: '{{url}}/api/region/regions'
+      auth:
+        type: basic
+        username: admin
+        password: password
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+  - info:
+      name: WeatherForecast
+      type: http
+      seq: 9
+    http:
+      method: GET
+      url: '{{url}}/weatherforecast'
+      auth:
+        type: basic
+        username: admin
+        password: password
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+  - info:
+      name: 'POST Regions '
+      type: http
+      seq: 3
+    http:
+      method: POST
+      url: '{{url}}/api/region/regions'
+      body:
+        type: json
+        data: |-
+          {
+            "Id": "1",
+            "Name": "Deepak",
+            "Code": "DPK"
+          }
+      auth:
+        type: bearer
+        token: '{{access_token}}'
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+  - info:
+      name: Auth Token
+      type: http
+      seq: 4
+    http:
+      method: POST
+      url: '{{url}}/api/Auth/token'
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "username": "admin",
+            "password": "password"
+          }
+      auth: inherit
+    runtime:
+      scripts:
+        - type: after-response
+          code: |-
+            const body = res.getBody();
+
+            console.log("Response body:", body);
+
+            bru.setEnvVar("access_token", body.accessToken);
+
+            console.log("Token saved:", bru.getEnvVar("access_token"));
+    settings:
+      encodeUrl: true
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+      forwardAuthorizationHeader: false
+bundled: true
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    exportedAt: '2026-10-28T11:23:46.927Z'
+    exportedUsing: Bruno
