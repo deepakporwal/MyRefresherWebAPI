@@ -13,7 +13,8 @@ namespace MyRefresherWebAPI.Controllers;
 [Route("api/[controller]")]
 public sealed class AuthController(
     IOptions<DevelopmentUsersOptions> usersOptions,
-    JwtTokenService tokenService) : ControllerBase
+    JwtTokenService tokenService,
+    ILogger<AuthController> logger) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("token")]
@@ -28,10 +29,20 @@ public sealed class AuthController(
 
         if (configuredUser is null || !passwordMatches)
         {
+            logger.LogWarning(
+                "Token request rejected for username {Username}.",
+                request.Username);
             return Unauthorized();
         }
 
-        return Ok(tokenService.CreateToken(configuredUser));
+        var token = tokenService.CreateToken(configuredUser);
+
+        logger.LogInformation(
+            "Token request accepted for username {Username} with {RoleCount} roles.",
+            configuredUser.Username,
+            configuredUser.Roles.Count);
+
+        return Ok(token);
     }
 
     private static bool FixedTimeEquals(string left, string right)

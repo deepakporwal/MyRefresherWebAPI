@@ -58,6 +58,29 @@ $env:DevelopmentUsers__Users__0__Roles__0 = 'Admin'
 
 Use a secret manager such as Azure Key Vault in a real deployment rather than placing secrets in shell history or committed configuration.
 
+## Logging
+
+The API uses `Serilog.AspNetCore` through the standard `ILogger<T>` abstraction. In the `Development` environment, logs are formatted as readable, separated, ANSI-colored console entries. Each request is emitted as one summary event with the HTTP method, path, status code, elapsed time, authenticated username, and trace ID. Outside Development, logs use compact JSON for ingestion by log platforms.
+
+Logging covers:
+
+- HTTP request completion through Serilog request logging.
+- Unhandled exceptions through the centralized exception handler.
+- JWT validation successes and failures.
+- Token request acceptance or rejection and token issuance metadata.
+- Region and weather operations.
+- Model-validation failures with the number of validation errors.
+
+For safety, the application does not log passwords, access tokens, signing keys, authorization headers, JWT claims payloads, or request/response bodies. The development password and signing key shown in this README are for local learning only and must be replaced before deployment.
+
+Serilog packages used by the project are:
+
+- `Serilog.AspNetCore` 10.0.0
+- `Serilog.Sinks.Console` 6.1.1
+- `Serilog.Formatting.Compact` 3.0.0
+
+The logging provider is configured in `Program.cs`. Development uses a human-readable console template; non-Development environments use `RenderedCompactJsonFormatter` so fields remain searchable and machine-readable.
+
 ## API endpoint
 
 ### Get regions

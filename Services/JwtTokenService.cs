@@ -8,7 +8,9 @@ using MyRefresherWebAPI.Models.Auth;
 
 namespace MyRefresherWebAPI.Services;
 
-public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptions)
+public sealed class JwtTokenService(
+    IOptions<JwtOptions> jwtOptions,
+    ILogger<JwtTokenService> logger)
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
@@ -36,9 +38,17 @@ public sealed class JwtTokenService(IOptions<JwtOptions> jwtOptions)
             expires: expiresAtUtc,
             signingCredentials: credentials);
 
-        return new TokenResponse(
+        var tokenResponse = new TokenResponse(
             new JwtSecurityTokenHandler().WriteToken(token),
             "Bearer",
             expiresAtUtc);
+
+        logger.LogDebug(
+            "JWT created for username {Username} with {RoleCount} roles and expiration {ExpiresAtUtc}.",
+            user.Username,
+            user.Roles.Count,
+            expiresAtUtc);
+
+        return tokenResponse;
     }
 }

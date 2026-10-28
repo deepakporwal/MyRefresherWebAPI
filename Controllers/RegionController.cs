@@ -13,10 +13,12 @@ namespace MyRefresherWebAPI.Controllers
     public class RegionController : ControllerBase
     {
         private readonly IMapper _mapper;
+        private readonly ILogger<RegionController> _logger;
 
-        public RegionController(IMapper mapper)
+        public RegionController(IMapper mapper, ILogger<RegionController> logger)
         {
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("regions")]
@@ -29,6 +31,10 @@ namespace MyRefresherWebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetRegions()
         {
+            _logger.LogInformation(
+                "Retrieving regions for user {User}.",
+                User.Identity?.Name ?? "unknown");
+
             var regions = new List<Region>
             {
                 new Region { Id = 1, Name = "Region 1", Code = "R1" },
@@ -37,6 +43,11 @@ namespace MyRefresherWebAPI.Controllers
             };
 
             var regionDtos = _mapper.Map<List<RegionDTO>>(regions);
+
+            _logger.LogInformation(
+                "Retrieved {RegionCount} regions for user {User}.",
+                regionDtos.Count,
+                User.Identity?.Name ?? "unknown");
 
             return Ok(regionDtos);
         }
@@ -49,6 +60,11 @@ namespace MyRefresherWebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult AddRegion([FromBody] RegionDTO regionDTO)
         {
+            _logger.LogInformation(
+                "Adding region {RegionId} for user {User}.",
+                regionDTO.Id,
+                User.Identity?.Name ?? "unknown");
+
             return Ok(new { message = "Region added successfully." });
         }
 
