@@ -1,0 +1,40 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Test results and coverage
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet and package artifacts
+*.nupkg
+*.snupkg
+packages/
+
+# ASP.NET Core local files
+*.local.json
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
